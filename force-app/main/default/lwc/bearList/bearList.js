@@ -1,14 +1,29 @@
 import { NavigationMixin } from 'lightning/navigation';
 import { LightningElement, wire } from 'lwc';
 import ursusResources from '@salesforce/resourceUrl/ursus_park';
+
+import { publish, MessageContext } from 'lightning/messageService';
+import BEAR_LIST_UPDATE_MESSAGE from '@salesforce/messageChannel/BearListUpdate__c';
 /** BearController.getAllBears() Apex method */
 //import getAllBears from '@salesforce/apex/BearController.getAllBears';
 /** BearController.searchBears(searchTerm) Apex method */
 import searchBears from '@salesforce/apex/BearController.searchBears';
 export default class BearList extends NavigationMixin(LightningElement) {
 	searchTerm = '';
-	@wire(searchBears, {searchTerm: '$searchTerm'})
-	bears;
+
+    bears;
+    @wire(MessageContext) messageContext;
+    @wire(searchBears, {searchTerm: '$searchTerm'})
+    loadBears(result) {
+      this.bears = result;
+      if (result.data) {
+        const message = {
+          bears: result.data
+        };
+        publish(this.messageContext, BEAR_LIST_UPDATE_MESSAGE, message);
+      }
+    }
+
 	appResources = {
 		bearSilhouette: `${ursusResources}/standing-bear-silhouette.png`,
 	};
